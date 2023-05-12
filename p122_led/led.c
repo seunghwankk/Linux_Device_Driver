@@ -15,7 +15,7 @@ module_param(twostring,charp,0);
 
 int led[4] = {
 	IMX_GPIO_NR(1, 16),   //16
-	IMX_GPIO_NR(1, 17),	  //17
+	IMX_GPIO_NR(1, 17),   //17
 	IMX_GPIO_NR(1, 18),   //18
 	IMX_GPIO_NR(1, 19),   //19
 };
@@ -90,7 +90,7 @@ static int led_init(void)
 	ret = led_request();
 	if(ret<0)
 	{
-//		return -EBUSY;  //Device or resource busy
+//		return -EBUSY;    //Device or resource busy
 		return ret;       //Device or resource busy
 	}
 	led_write(ledvalue);
