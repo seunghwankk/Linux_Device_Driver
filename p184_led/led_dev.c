@@ -52,9 +52,9 @@ void led_write(unsigned long data)
 {
 	int i;
 	for(i = 0; i < ARRAY_SIZE(led); i++){
-//		gpio_direction_output(led[i], (data >> i ) & 0x01);
+//	gpio_direction_output(led[i], (data >> i ) & 0x01);
 //  	gpio_set_value(led[i], (data >> i ) & 0x01);
-  		gpio_direction_output(led[i], 0);
+  	gpio_direction_output(led[i], 0);
     	gpio_set_value(led[i], (data >> i ) & 0x01);
 	}
 #if DEBUG
@@ -80,9 +80,9 @@ void led_read(char * led_data)
 		data |= temp;
 		if(i==0)
 			break;
-																					data <<= 1;  //data <<= 1;
-																				}
-																			*/
+		data <<= 1;  //data <<= 1;
+	}
+*/
 #if DEBUG
 	printk("#### %s, data = %ld\n", __FUNCTION__, data);
 #endif
@@ -94,32 +94,32 @@ void led_read(char * led_data)
 
 int leddev_open (struct inode *inode, struct file *filp)
 {
-    int num0 = MAJOR(inode->i_rdev); 
-    int num1 = MINOR(inode->i_rdev); 
-    printk( "leddev open -> major : %d\n", num0 );
-    printk( "leddev open -> minor : %d\n", num1 );
+  	int num0 = MAJOR(inode->i_rdev); 
+   	int num1 = MINOR(inode->i_rdev); 
+    	printk( "leddev open -> major : %d\n", num0 );
+    	printk( "leddev open -> minor : %d\n", num1 );
 
-    return 0;
+	return 0;
 }
 
 loff_t leddev_llseek (struct file *filp, loff_t off, int whence )
 {
-    printk( "leddev llseek -> off : %08X, whenec : %08X\n", (unsigned int)off, whence );
-    return 0x23;
+    	printk( "leddev llseek -> off : %08X, whenec : %08X\n", (unsigned int)off, whence );
+    	return 0x23;
 }
 
 ssize_t leddev_read(struct file *filp, char *buf, size_t count, loff_t *f_pos)
 {
-    printk( "leddev read -> buf : %08X, count : %08X \n", (unsigned int)buf, count );
+    	printk( "leddev read -> buf : %08X, count : %08X \n", (unsigned int)buf, count );
 	led_read(buf);
-    return count;
+    	return count;
 }
 
 ssize_t leddev_write (struct file *filp, const char *buf, size_t count, loff_t *f_pos)
 {
-    printk( "leddev write -> buf : %08X, count : %08X \n", (unsigned int)buf, count );
+    	printk( "leddev write -> buf : %08X, count : %08X \n", (unsigned int)buf, count );
 	led_write(*buf);
-    return count;
+    	return count;
 }
 
 //int leddev_ioctl (struct inode *inode, struct file *filp, unsigned int cmd, unsigned long arg)
@@ -132,27 +132,27 @@ static long leddev_ioctl (struct file *filp, unsigned int cmd, unsigned long arg
 int leddev_release (struct inode *inode, struct file *filp)
 {
 	printk( "leddev release \n" );
-    return 0;
+    	return 0;
 }
 
 struct file_operations leddev_fops =
 {
-    .owner    = THIS_MODULE,
-    .open     = leddev_open,     
-    .read     = leddev_read,     
-    .write    = leddev_write,    
+	.owner    = THIS_MODULE,
+	.open     = leddev_open,     
+	.read     = leddev_read,     
+	.write    = leddev_write,    
 	.unlocked_ioctl = leddev_ioctl,
-    .llseek   = leddev_llseek,   
-    .release  = leddev_release,  
+	.llseek   = leddev_llseek,   
+	.release  = leddev_release,  
 };
 
 int leddev_init(void)
 {
-    int result;
-    printk( "leddev leddev_init \n" );    
-    result = register_chrdev( LED_DEV_MAJOR, LED_DEV_NAME, &leddev_fops);
-    if (result < 0) return result;
-	result = led_request();
+   	int result;
+   	printk( "leddev leddev_init \n" );    
+   	result = register_chrdev( LED_DEV_MAJOR, LED_DEV_NAME, &leddev_fops);
+   	if (result < 0) return result;
+		result = led_request();
 	if(result < 0)
 	{
 		return result;     /* Device or resource busy */
