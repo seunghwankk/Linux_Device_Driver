@@ -45,9 +45,9 @@ void led_write(unsigned long data)
 {
 	int i;
 	for(i = 0; i < ARRAY_SIZE(led); i++){
-//		gpio_direction_output(led[i], (data >> i ) & 0x01);
+//	gpio_direction_output(led[i], (data >> i ) & 0x01);
 //  	gpio_set_value(led[i], (data >> i ) & 0x01);
-  		gpio_direction_output(led[i], 0);
+  	gpio_direction_output(led[i], 0);
     	gpio_set_value(led[i], (data >> i ) & 0x01);
 	}
 #if DEBUG
