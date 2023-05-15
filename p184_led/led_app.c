@@ -10,29 +10,29 @@
 void print_led(unsigned char led);
 int main(int argc,char * argv[])
 {
-    int dev;
-    char buff = 0;
-    int ret;
+    	int dev;
+    	char buff = 0;
+    	int ret;
 	if(argc < 2)
 	{
 		printf("USAGE : %s [ledval] \n",argv[0]);
 		return 1;
 	}
 	buff = atoi(argv[1]);
-    dev = open( DEVICE_FILENAME, O_RDWR|O_NDELAY );
+    	dev = open( DEVICE_FILENAME, O_RDWR|O_NDELAY );
 	if(dev<0)
 	{
 		perror("open()");
 		return 2;
 	}
-    ret = write(dev,&buff,sizeof(buff));
+    	ret = write(dev,&buff,sizeof(buff));
 	if(ret < 0)
 		perror("write()");
 	buff = 0;
 	ret = read(dev,&buff,sizeof(buff));
 	print_led(buff);
-    close(dev);
-    return 0;
+    	close(dev);
+    	return 0;
 }
 void print_led(unsigned char led)
 {
@@ -41,7 +41,7 @@ void print_led(unsigned char led)
 	for(i=0;i<=3;i++)
 	{
 		if(led & (0x01 << i))
-		putchar('O');
+			putchar('O');
 		else
 			putchar('X');
 		if(i < 3 )
