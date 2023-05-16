@@ -21,7 +21,7 @@
 #define DEBUG 1
 #define IMX_GPIO_NR(bank, nr)       (((bank) - 1) * 32 + (nr))
 static int timeval = 100;	//f=100HZ, T=1/100 = 10ms, 100*10ms = 1Sec
-module_param(timeval,int ,0);
+module_param(timeval,int ,0);  //module_param(매개변수 이름, 유형, 권한)  0 : 읽기/쓰기 가능
 static int ledval = 0;
 module_param(ledval,int ,0);
 typedef struct
@@ -53,8 +53,8 @@ int led[] = {
 
 static int kerneltimer_open (struct inode *inode, struct file *filp)
 {
-	int num0 = MAJOR(inode->i_rdev);
-	int num1 = MINOR(inode->i_rdev);
+	int num0 = MAJOR(inode->i_rdev);  //num0에 inode의 i_rdev 필드의 주번호 저장
+	int num1 = MINOR(inode->i_rdev);  //num1에 inode의 i_rdev 필드의 부번호 저장
 	printk( "call open -> major : %d\n", num0 );
 	printk( "call open -> minor : %d\n", num1 );
 
@@ -77,7 +77,7 @@ static void key_read(char * key_data)
 #if DEBUG
 	printk("#### %s, data = %d\n", __FUNCTION__, data);
 #endif
-	*key_data = data;
+	*key_data = data;  //key_data 포인터가 가리키는 메모리 위치에 data 저장
 	return;
 }
 
@@ -87,16 +87,17 @@ static int led_init(void)
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(led); i++) {
-		ret = gpio_request(led[i], "gpio led");
+		ret = gpio_request(led[i], "gpio led");  //led[i]에 해당하는 GPIO핀 요청, "gpio led":GPIO핀 이름
 		if(ret){
 			printk("#### FAILED Request gpio %d. error : %d \n", led[i], ret);
 		} 
 		else {
-			gpio_direction_output(led[i], 0);
+			gpio_direction_output(led[i], 0);  //led[i]에 해당하는 GPIO핀을 출력방향으로 설정, 0 : 초기출력 값
 		}
 	}
 	return ret;
 }
+
 static void led_exit(void)
 {
 	int i;
@@ -115,6 +116,7 @@ void led_write(char data)
 #endif
 	}
 }
+
 ssize_t kerneltimer_write(struct file *filp, const char *buf, size_t count, loff_t *f_pos){
 	char kbuf;
 	int ret;
