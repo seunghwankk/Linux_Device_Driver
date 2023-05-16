@@ -110,7 +110,7 @@ void led_write(char data)
 {
 	int i;
 	for(i = 0; i < ARRAY_SIZE(led); i++){
-		gpio_set_value(led[i], ((data >> i) & 0x01));
+		gpio_set_value(led[i], ((data >> i) & 0x01));  //led[i]의 GPIO핀 값을 data의 i번째 비트 값으로 설정
 #if DEBUG
 		printk("#### %s, data = %d(%d)\n", __FUNCTION__, data,(data>>i));
 #endif
@@ -120,19 +120,18 @@ void led_write(char data)
 ssize_t kerneltimer_write(struct file *filp, const char *buf, size_t count, loff_t *f_pos){
 	char kbuf;
 	int ret;
-	ret = copy_from_user(&kbuf,buf,count);
-	ptrmng->led = kbuf;
+	ret = copy_from_user(&kbuf,buf,count);  //buf에서 count크기만큼 데이터를 읽어와 kbuf변수에 복사 -> 오류코드 or 0 반환
+	ptrmng->led = kbuf;  //모듈 내부의 ptrmng 구조체에 있는 led 변수에 kbuf 값을 저장
 	return count;
 }
 
 ssize_t kerneltimer_read(struct file *filp, char *buf, size_t count, loff_t *f_pos){
 	char kbuf;
 	int ret;
-	key_read(&kbuf);
-	ret = copy_to_user(buf,&kbuf,count);
+	key_read(&kbuf);  //kbuf 변수에 키 입력 값을 읽어옴
+	ret = copy_to_user(buf,&kbuf,count);  //kbuf 변수 값을 count크기만큼 buf로 복사
 	return count;
 }
-
 
 void kerneltimer_registertimer(KERNEL_TIMER_MANAGER *pdata, unsigned long timeover)
 {
@@ -142,18 +141,19 @@ void kerneltimer_registertimer(KERNEL_TIMER_MANAGER *pdata, unsigned long timeov
 	pdata->timer.function = kerneltimer_timeover;
 	add_timer( &(pdata->timer) );
 }
-void kerneltimer_timeover(unsigned long arg)
+
+void kerneltimer_timeover(unsigned long arg)  //타이머가 만료되면 호출되는 콜백 함수
 {
 	KERNEL_TIMER_MANAGER* pdata = NULL;
 	if( arg )
 	{
-		pdata = ( KERNEL_TIMER_MANAGER *)arg;
-		led_write(pdata->led & 0x0f);
+		pdata = ( KERNEL_TIMER_MANAGER *)arg;  //arg는 pdata->timer.data에 전달된 데이터, pdata는 구조체 포인터롤 형변환
+		led_write(pdata->led & 0x0f);  //pdata->led의 하위 4비트만 사용
 #if DEBUG
 		printk("led : %#04x\n",(unsigned int)(pdata->led & 0x0000000f));
 #endif
 		pdata->led = ~(pdata->led);
-		kerneltimer_registertimer( pdata, TIME_STEP);
+		kerneltimer_registertimer( pdata, TIME_STEP);  //새로운 타이머 등록, TIME_STEP:타이머가 다시 동작하는 시간 간격
 	}
 }
 
@@ -188,6 +188,7 @@ int kerneltimer_init(void)
 	kerneltimer_registertimer( ptrmng, TIME_STEP);
 	return 0;
 }
+
 void kerneltimer_exit(void)
 {
 	if(timer_pending(&(ptrmng->timer)))
