@@ -1,6 +1,9 @@
 # Linux_Device_Driver
 
-## p238_ledkey
+## 드라이버 동작 순서
+![image](https://github.com/seunghwankk/Linux_Device_Driver/assets/126065290/97c5a3f0-da34-4860-970d-0b0793f47cc2)
+
+## ledkey
 
 ![image](https://github.com/seunghwankk/Linux_Device_Driver/assets/126065290/7ebb508c-77f1-42cc-a129-016f008761c9)
 
