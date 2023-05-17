@@ -10,6 +10,9 @@
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/slab.h>
+#include <linux/sched.h>
+#include <linux/wait.h>
+#include <asm/io.h>
 #include <asm/uaccess.h>
 
 #define   LED_DEV_NAME            "ledkeydev"
@@ -17,12 +20,12 @@
 #define DEBUG 1
 #define IMX_GPIO_NR(bank, nr)       (((bank) - 1) * 32 + (nr))
 
+DECLARE_WAIT_QUEUE_HEAD(WaitQueue_Read);
+
 int irq_init(struct file *filp);
 
 static unsigned long ledvalue = 15;
-static char * twostring = NULL;
-//static int sw_irq[8] = {0,};
-//static char sw_no = 0;
+
 typedef struct
 {
 	int sw_irq[8];
@@ -30,7 +33,6 @@ typedef struct
 }	__attribute__ ((packed)) ISR_INFO
 
 module_param(ledvalue, ulong ,0);
-module_param(twostring,charp,0);
 
 int led[4] = {
 	IMX_GPIO_NR(1, 16),   //16
@@ -52,24 +54,25 @@ int key[8] = {
 irqreturn_t sw_isr(int irq, void *private_data)
 {
 	int i;
-	char * pSw_no = (char *)private_data;
+	ISR_INFO* pSw_no = (ISR_INFO*)private_data;
 	for(i = 0; i < ARRAY_SIZE(key); i++)
 	{
-		if(irq == sw_irq[i])
+		if(irq == pSw_no->sw_irq[i])
 		{	
-			*pSw_no = i + 1;
+			pSw_no->sw_no = i + 1;
 			break;
 		}
 	}
-	printk("IRQ : %d, sw_no : %d\n", irq, *pSw_no);
+	printk("IRQ : %d, sw_no : %d\n", irq, pSw_no->sw_no);
+	wake_up_interruptible(&WaitQueue_Read);
 	return IRQ_HANDLED;
 }
 
-static int ledkey_request(void)
+static int ledkey_request(struct file* filp)
 {
 	int ret = 0;
 	int i;
-	
+	ISR_INFO* plsrInfo = (ISR_INFO*)filp->private_data;
 	for (i = 0; i < ARRAY_SIZE(led); i++) {
 		ret = gpio_request(led[i], "gpio led");
 		if(ret<0){
@@ -80,24 +83,24 @@ static int ledkey_request(void)
 	}
 	for (i = 0; i < ARRAY_SIZE(key); i++) {
 //		ret = gpio_request(key[i], "gpio key");
-		sw_irq[i] = gpio_to_irq(key[i]);
+		pIsrInfo->sw_irq[i] = gpio_to_irq(key[i]);
 		if(ret<0){
 			printk("#### FAILED Request gpio %d. error : %d \n", key[i], ret);
 			break;
 		} 
-//  		gpio_direction_input(key[i]); 
 	}
 	return ret;
 }
 static void ledkey_free(struct file * filp)
 {
 	int i;
+	ISR_INFO* pIsr = (ISR_INFO*)filp->private_data;
 	for (i = 0; i < ARRAY_SIZE(led); i++){
 		gpio_free(led[i]);
 	}
 	for (i = 0; i < ARRAY_SIZE(key); i++){
 //		gpio_free(key[i]);
-		free_irq(sw_irq[i], filp->private_data);
+		free_irq(pIsr->sw_irq[i], filp->private_data);
 	}
 }
 
@@ -105,7 +108,7 @@ void led_write(unsigned char data)
 {
 	int i;
 	for(i = 0; i < ARRAY_SIZE(led); i++){
-    	gpio_set_value(led[i], (data >> i ) & 0x01);
+    		gpio_set_value(led[i], (data >> i ) & 0x01);
 	}
 #if DEBUG
 	printk("#### %s, data = %d\n", __FUNCTION__, data);
@@ -135,18 +138,20 @@ void key_read(unsigned char * key_data)
 int irq_init(struct file *filp)
 {
 	int i;
+	int result = 0;
 	char * sw_name[8] = {"key1", "key2", "key3", "key4", "key5", "key6", "key7", "key8"};
-	int result = ledkey_request();
+	ISR_INFO* pIsrInfo = (ISR_INFO*)filp->private_data;
+	result = ledkey_request(filp);
 	if(result < 0)
 	{
   		return result;     /* Device or resource busy */
 	}
 	for(i = 0;i < ARRAY_SIZE(key); i++)
 	{
-		result = request_irq(sw_irq[i], sw_isr, IRQF_TRIGGER_RISING, sw_name[i], filp->private_data);
+		result = request_irq(pIsrInfo->sw_irq[i], sw_isr, IRQF_TRIGGER_RISING, sw_name[i], filp->private_data);
 		if(result)
 		{
-			printk("#### FAILED Request irq %d. error : %d \n", sw_irq[i], result);
+			printk("#### FAILED Request irq %d. error : %d \n", pIsrInfo->sw_irq[i], result);
 			break;
 		}
 	}
@@ -162,9 +167,9 @@ int ledkeydev_open (struct inode *inode, struct file *filp)
 	pIsrInfo = kmalloc(sizeof(ISR_INFO), GFP_KERNEL);
     printk( "ledkeydev open -> major : %d\n", num0 );
     printk( "ledkeydev open -> minor : %d\n", num1 );
-//	*pSw_no = 0;
+
 	pIsrInfo->sw_no = 0;
-	filp->private_data = (void *)pSw_no;
+	filp->private_data = (void *)pIsrInfo;
 	irq_init(filp);
 
     return 0;
@@ -172,16 +177,18 @@ int ledkeydev_open (struct inode *inode, struct file *filp)
 
 ssize_t ledkeydev_read(struct file *filp, char *buf, size_t count, loff_t *f_pos)
 {
-//	char kbuf;
 	int ret;
-	char * pSw_no = (char *)filp->private_data;
+	ISR_INFO * pSw_no = (ISR_INFO *)filp->private_data;
 #if DEBUG
     printk( "ledkeydev read -> buf : %08X, count : %08X \n", (unsigned int)buf, count );
 #endif
-//	key_read(&kbuf);     
-//	ret=copy_to_user(buf,&sw_no,count);
-	ret=copy_to_user(buf,pSw_no,count);
-	*pSw_no = 0;
+	if(!(filp->f_flags & O_NONBLOCK))
+	{
+		if(pSw_no->sw_no == 0)
+			interruptible_sleep_on(&WaitQueue_Read);
+	}
+	ret=copy_to_user(buf,&pSw_no->sw_no,count);
+	pSw_no->sw_no = 0;
 	if(ret < 0)
 		return -ENOMEM;
     return count;
