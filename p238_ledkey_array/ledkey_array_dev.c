@@ -23,17 +23,17 @@ module_param(twostring,charp,0);
 
 int led[4] = {
 	IMX_GPIO_NR(1, 16),   //16
-	IMX_GPIO_NR(1, 17),	  //17
+	IMX_GPIO_NR(1, 17),   //17
 	IMX_GPIO_NR(1, 18),   //18
 	IMX_GPIO_NR(1, 19),   //19
 };
 int key[8] = {
 	IMX_GPIO_NR(1, 20),   //20
-	IMX_GPIO_NR(1, 21),	  //21
+	IMX_GPIO_NR(1, 21),   //21
 	IMX_GPIO_NR(4, 8),    //104
 	IMX_GPIO_NR(4, 9),    //105
 	IMX_GPIO_NR(4, 5),    //101
-	IMX_GPIO_NR(7, 13),	  //205
+	IMX_GPIO_NR(7, 13),   //205
 	IMX_GPIO_NR(1, 7),    //7
 	IMX_GPIO_NR(1, 8),    //8
 };
