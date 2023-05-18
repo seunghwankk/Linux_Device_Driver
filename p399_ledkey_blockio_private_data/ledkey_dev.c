@@ -30,7 +30,7 @@ typedef struct
 {
 	int sw_irq[8];
 	char sw_no;
-}	__attribute__ ((packed)) ISR_INFO
+}	__attribute__ ((packed)) ISR_INFO;
 
 module_param(ledvalue, ulong ,0);
 
