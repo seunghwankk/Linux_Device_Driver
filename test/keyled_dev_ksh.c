@@ -251,7 +251,7 @@ static long ledkey_ioctl (struct file *filp, unsigned int cmd, unsigned long arg
 				kerneltimer_start(filp);
 			break;
 		case TIMER_STOP :
-			if(!timer_pending(&(ptrmng->timer)))
+			if(timer_pending(&(ptrmng->timer)))
 				kerneltimer_stop(filp);
 			break;
 		case TIMER_VALUE :
