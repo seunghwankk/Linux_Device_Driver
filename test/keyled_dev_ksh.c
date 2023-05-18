@@ -18,7 +18,7 @@
 
 #define   LED_DEV_NAME            "keyled_dev_ksh"
 #define   LED_DEV_MAJOR            240      
-#define TIME_STEP		time_val
+#define TIME_STEP		timer_val
 #define DEBUG 1
 #define IMX_GPIO_NR(bank, nr)       (((bank) - 1) * 32 + (nr))
 
